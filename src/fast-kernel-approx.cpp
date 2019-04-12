@@ -21,7 +21,7 @@ using std::cref;
 void comp_weights(
     arma::vec&, const source_node&, const query_node&, const arma::mat&,
     const arma::vec&, const arma::mat&, const double, const mvariate&,
-    thread_pool&, std::list<std::future<void> >&);
+    thread_pool&, std::list<std::future<void> >&, const bool);
 
 
 using get_X_root_output_type =
@@ -120,7 +120,7 @@ arma::vec FSKA(
   log_weights.fill(-std::numeric_limits<double>::infinity());
   std::list<std::future<void> > futures;
   comp_weights(log_weights, X_root_source, Y_root_query, X, ws_log, Y, eps,
-               kernel, pool, futures);
+               kernel, pool, futures, false);
 
   while(!futures.empty()){
     futures.back().get();
@@ -238,9 +238,9 @@ void comp_weights(
     const query_node &Y_node, const arma::mat &X,
     const arma::vec &ws_log, const arma::mat &Y, const double eps,
     const mvariate &kernel, thread_pool &pool,
-    std::list<std::future<void> > &futures)
+    std::list<std::future<void> > &futures, const bool finish)
   {
-    if(futures.size() > max_futures){
+    if(!finish and futures.size() > max_futures){
       std::size_t n_earsed = 0L;
       std::future_status status;
       static constexpr std::chrono::microseconds t_weight(1);
@@ -268,54 +268,76 @@ void comp_weights(
 
     if(X_node.weight *
         (k_max - k_min) / ((k_max + k_min) / 2. + 1e-16) < 2. * eps){
-      futures.push_back(
-        pool.submit(std::bind(
-            comp_w_centroid, ref(log_weights), cref(X_node), cref(Y_node),
-            cref(Y), cref(kernel), pool.thread_count < 2L)));
+      auto task = std::bind(
+        comp_w_centroid, ref(log_weights), cref(X_node), cref(Y_node),
+        cref(Y), cref(kernel), pool.thread_count < 2L);
+
+      if(!finish)
+        futures.push_back(pool.submit(std::move(task)));
+      else
+        task();
 
       return;
     }
 
     if(X_node.node.is_leaf() and Y_node.node.is_leaf()){
+      auto task = std::bind(
+        comp_all, ref(log_weights), cref(X_node),
+        cref(Y_node), cref(X), cref(ws_log), cref(Y), cref(kernel),
+        pool.thread_count < 2L);
+
+      if(!finish)
+        futures.push_back(pool.submit(std::move(task)));
+      else
+        task();
+      return;
+    }
+
+    /* check if we should finish the rest in another thread */
+    static constexpr arma::uword stop_n_elem = 50L;
+    if(!finish and
+         X_node.node.n_elem < stop_n_elem and
+         Y_node.node.n_elem < stop_n_elem){
       futures.push_back(
         pool.submit(std::bind(
-            comp_all, ref(log_weights), cref(X_node),
-            cref(Y_node), cref(X), cref(ws_log), cref(Y), cref(kernel),
-            pool.thread_count < 2L)));
+            comp_weights,
+            ref(log_weights), cref(X_node), cref(Y_node), cref(X),
+            cref(ws_log), cref(Y), eps, cref(kernel), ref(pool),
+            ref(futures), true)));
       return;
     }
 
     if(!X_node.node.is_leaf() and  Y_node.node.is_leaf()){
       comp_weights(
         log_weights, *X_node.left ,  Y_node,
-        X, ws_log, Y, eps, kernel, pool, futures);
+        X, ws_log, Y, eps, kernel, pool, futures, finish);
       comp_weights(
         log_weights, *X_node.right,  Y_node,
-        X, ws_log, Y, eps, kernel, pool, futures);
+        X, ws_log, Y, eps, kernel, pool, futures, finish);
       return;
     }
     if( X_node.node.is_leaf() and !Y_node.node.is_leaf()){
       comp_weights(
         log_weights,  X_node     , *Y_node.left,
-        X, ws_log, Y, eps, kernel, pool, futures);
+        X, ws_log, Y, eps, kernel, pool, futures, finish);
       comp_weights(
         log_weights,  X_node     , *Y_node.right,
-        X, ws_log, Y, eps, kernel, pool, futures);
+        X, ws_log, Y, eps, kernel, pool, futures, finish);
       return;
     }
 
     comp_weights(
       log_weights, *X_node.left , *Y_node.left ,
-      X, ws_log, Y, eps, kernel, pool, futures);
+      X, ws_log, Y, eps, kernel, pool, futures, finish);
     comp_weights(
       log_weights, *X_node.left , *Y_node.right,
-      X, ws_log, Y, eps, kernel, pool, futures);
+      X, ws_log, Y, eps, kernel, pool, futures, finish);
     comp_weights(
       log_weights, *X_node.right, *Y_node.left ,
-      X, ws_log, Y, eps, kernel, pool, futures);
+      X, ws_log, Y, eps, kernel, pool, futures, finish);
     comp_weights(
       log_weights, *X_node.right, *Y_node.right,
-      X, ws_log, Y, eps, kernel, pool, futures);
+      X, ws_log, Y, eps, kernel, pool, futures, finish);
   }
 
 
