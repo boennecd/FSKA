@@ -78,25 +78,25 @@ microbenchmark::microbenchmark(
   `dual tree 1` = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, 
                                eps = 5e-3, n_threads = 1L),
   `dual tree 6` = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, 
-                               eps = 5e-3, n_threads = 6L),
+                               eps = 5e-3, n_threads = 4L),
   `naive 1`     = FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 1L),
-  `naive 6`     = FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 6L),
+  `naive 6`     = FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 4L),
   times = 10L)
 ```
 
     ## Unit: milliseconds
     ##         expr     min      lq    mean  median      uq     max neval
-    ##  dual tree 1  112.77  114.32  117.80  114.98  121.14  127.91    10
-    ##  dual tree 6   33.26   34.37   36.27   35.44   37.76   41.59    10
-    ##      naive 1 3216.49 3238.89 3273.21 3260.40 3301.89 3355.06    10
-    ##      naive 6  612.74  628.76  648.95  642.59  656.24  722.93    10
+    ##  dual tree 1  115.06  116.47  117.21  117.10  118.05  119.57    10
+    ##  dual tree 6   40.64   41.53   44.67   42.66   45.54   54.02    10
+    ##      naive 1 3215.77 3241.00 3295.98 3279.42 3361.57 3384.72    10
+    ##      naive 6  872.13  879.12  892.81  891.21  906.44  916.25    10
 
 ``` r
 # The functions return the un-normalized log weights. We first compare
 # the result on this scale
 o1 <- FSKA:::FSKA  (X = X, ws = ws, Y = X, N_min = 10L, eps = 5e-3, 
                     n_threads = 1L)
-o2 <- FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 6L)
+o2 <- FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 4L)
 
 all.equal(o1, o2)
 ```
@@ -141,19 +141,19 @@ run_times <- lapply(Ns, function(N){
   invisible(list2env(get_sims(N), environment()))
   microbenchmark::microbenchmark(
     `dual-tree`   = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, eps = 5e-3, 
-                               n_threads = 6L),
-    naive         = FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 6L),
+                               n_threads = 4L),
+    naive         = FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 4L),
     `dual-tree 1` = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, eps = 5e-3, 
                                n_threads = 1L), 
     times = 5L)
 })
 
-Ns_xtra <- 2^(15:20)
+Ns_xtra <- 2^(15:19)
 run_times_xtra <- lapply(Ns_xtra, function(N){
   invisible(list2env(get_sims(N), environment()))
   microbenchmark::microbenchmark(
     `dual-tree` = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, eps = 5e-3, 
-                               n_threads = 6L),
+                               n_threads = 4L),
     times = 5L)
 })
 ```
@@ -170,21 +170,20 @@ meds
 ```
 
     ##          method
-    ## N         Dual-tree     Naive Dual-tree 1
-    ##   384       0.01332 0.0007692     0.00548
-    ##   768       0.04273 0.0028678     0.01573
-    ##   1536      0.07662 0.0105566     0.02411
-    ##   3072      0.08234 0.0405470     0.03498
-    ##   6144      0.03422 0.1271620     0.05670
-    ##   12288     0.03407 0.4274822     0.09950
-    ##   24576     0.05303 1.7662486     0.19005
-    ##   49152     0.10464 9.7473689     0.36924
-    ##   98304     0.20108        NA          NA
-    ##   196608    0.39089        NA          NA
-    ##   393216    0.78175        NA          NA
-    ##   786432    1.84104        NA          NA
-    ##   1572864   3.64167        NA          NA
-    ##   3145728   8.44149        NA          NA
+    ## N         Dual-tree      Naive Dual-tree 1
+    ##   384       0.01155  0.0006633    0.005589
+    ##   768       0.03594  0.0025549    0.014017
+    ##   1536      0.06136  0.0092789    0.023578
+    ##   3072      0.05016  0.0364991    0.034119
+    ##   6144      0.02466  0.1557554    0.055684
+    ##   12288     0.03782  0.5967916    0.101035
+    ##   24576     0.06789  2.5380605    0.192589
+    ##   49152     0.13948 10.2233319    0.373784
+    ##   98304     0.25280         NA          NA
+    ##   196608    0.50790         NA          NA
+    ##   393216    1.12121         NA          NA
+    ##   786432    2.63991         NA          NA
+    ##   1572864   4.84604         NA          NA
 
 ``` r
 par(mar = c(5, 4, .5, .5))
