@@ -233,7 +233,6 @@ void comp_all
     log_weights[i_y] = log_sum_log(log_weights[i_y], *(o++));
 }
 
-/* use std::bind... */
 void comp_weights(
     arma::vec &log_weights, const source_node &X_node,
     const query_node &Y_node, const arma::mat &X,
@@ -244,7 +243,7 @@ void comp_weights(
     if(futures.size() > max_futures){
       std::size_t n_earsed = 0L;
       std::future_status status;
-      static constexpr std::chrono::milliseconds t_weight(1);
+      static constexpr std::chrono::microseconds t_weight(1);
       std::list<std::future<void> >::iterator it;
       const std::list<std::future<void> >::const_iterator
         end = futures.end();
