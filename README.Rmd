@@ -150,10 +150,10 @@ run_times <- lapply(Ns, function(N){
   invisible(list2env(get_sims(N), environment()))
   microbenchmark::microbenchmark(
     `dual-tree`   = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, eps = 5e-3, 
-                               n_threads = 4L),
+                                 n_threads = 4L),
     naive         = FSKA:::naive(X = X, ws = ws, Y = X, n_threads = 4L),
     `dual-tree 1` = FSKA:::FSKA (X = X, ws = ws, Y = X, N_min = 10L, eps = 5e-3, 
-                               n_threads = 1L), 
+                                 n_threads = 1L), 
     times = 5L)
 })
 

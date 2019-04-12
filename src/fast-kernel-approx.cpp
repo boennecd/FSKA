@@ -20,6 +20,7 @@ void comp_weights(
     const arma::vec&, const arma::mat&, const double, const mvariate&,
     thread_pool&, std::list<std::future<void> >&);
 
+/* use std::bind... */
 struct get_X_root {
   using output_type =
     std::tuple<std::unique_ptr<KD_note>, std::unique_ptr<source_node>,
@@ -61,6 +62,7 @@ struct get_X_root {
   }
 };
 
+/* use std::bind... */
 struct get_Y_root {
   using output_type =
     std::tuple<std::unique_ptr<KD_note>, std::unique_ptr<query_node>,
@@ -133,7 +135,7 @@ arma::vec FSKA(
   const mvariate kernel(X.n_rows);
 
   arma::vec log_weights(Y.n_cols);
-  log_weights.fill(std::numeric_limits<double>::quiet_NaN());
+  log_weights.fill(-std::numeric_limits<double>::infinity());
   std::list<std::future<void> > futures;
   comp_weights(log_weights, X_root_source, Y_root_query, X, ws_log, Y, eps,
                kernel, pool, futures);
@@ -150,6 +152,7 @@ arma::vec FSKA(
   return log_weights(permu_vec);
 }
 
+/* use std::bind... */
 struct comp_w_centroid {
   arma::vec &log_weights;
   const source_node &X_node;
@@ -194,10 +197,7 @@ struct comp_w_centroid {
         continue;
       }
 
-      if(!std::isnan(log_weights[i]))
-        log_weights[i] = log_sum_log(log_weights[i], new_term);
-      else
-        log_weights[i] = new_term;
+      log_weights[i] = log_sum_log(log_weights[i], new_term);
 
     }
 
@@ -207,15 +207,13 @@ struct comp_w_centroid {
     o = out.begin();
     std::lock_guard<std::mutex> guard(*Y_node.idx_mutex);
     for(auto i : idx){
-      if(!std::isnan(log_weights[i]))
-        log_weights[i] = log_sum_log(log_weights[i], *(o++));
-      else
-        log_weights[i] = *(o++);
+      log_weights[i] = log_sum_log(log_weights[i], *(o++));
     }
   }
 
 };
 
+/* use std::bind... */
 struct comp_all {
   arma::vec &log_weights;
   const source_node &X_node;
@@ -269,10 +267,7 @@ struct comp_all {
 
       }
 
-      if(!std::isnan(log_weights[i_y]))
-        log_weights[i_y] = log_sum_log(log_weights[i_y], new_term);
-      else
-        log_weights[i_y] = new_term;
+      log_weights[i_y] = log_sum_log(log_weights[i_y], new_term);
 
     }
 
@@ -282,15 +277,13 @@ struct comp_all {
     o = out.begin();
     std::lock_guard<std::mutex> guard(*Y_node.idx_mutex);
     for(auto i_y : idx_y){
-      if(!std::isnan(log_weights[i_y]))
-        log_weights[i_y] = log_sum_log(log_weights[i_y], *(o++));
-      else
-        log_weights[i_y] = *(o++);
+      log_weights[i_y] = log_sum_log(log_weights[i_y], *(o++));
 
     }
   }
 };
 
+/* use std::bind... */
 void comp_weights(
     arma::vec &log_weights, const source_node &X_node,
     const query_node &Y_node, const arma::mat &X,
