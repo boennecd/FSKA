@@ -300,14 +300,19 @@ void hyper_rectangle::shrink
   (const arma::mat &X, const std::vector<arma::uword> &idx,
    const arma::uword dim)
   {
+#ifdef FSKA_DEBUG
+    if(idx.size() < 1L)
+      throw std::invalid_argument("no elements left");
+#endif
+
     double &lower = borders(0L, dim), &upper = borders(1L, dim);
-    lower = std::numeric_limits<double>::max();
-    upper = std::numeric_limits<double>::lowest();
-    for(auto i : idx){
-      double x = X(dim, i);
+    auto i = idx.begin();
+    upper = lower = X(dim, *(i++));
+    for(; i != idx.end(); ++i){
+      double x = X(dim, *i);
       if(x > upper)
         upper = x;
-      if(x < lower)
+      else if(x < lower)
         lower = x;
     }
   }
