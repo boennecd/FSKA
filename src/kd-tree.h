@@ -36,11 +36,12 @@ class KD_note {
   std::unique_ptr<std::vector<arma::uword> > idx;
   std::unique_ptr<KD_note> left;
   std::unique_ptr<KD_note> right;
+  bool is_leaf_;
 public:
   const arma::uword n_elem;
 
   bool is_leaf() const {
-    return !(left or right);
+    return is_leaf_;
   };
   const std::vector<arma::uword> &get_indices() const;
   std::vector<arma::uword> get_indices_parent();

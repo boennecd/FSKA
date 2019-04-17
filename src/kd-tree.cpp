@@ -58,17 +58,20 @@ KD_note::KD_note(
         rect_left .shrink(X, *idx_left , split_dim.dim);
         rect_right.shrink(X, *idx_right, split_dim.dim);
       }
-      idx_in.release(); /* do not need indices anymore */
+      idx_in.reset(); /* do not need indices anymore */
 
       left .reset(
         new KD_note(X, N_min, idx_left , order, depth + 1L, &rect_left));
       right.reset(
         new KD_note(X, N_min, idx_right, order, depth + 1L, &rect_right));
 
+      is_leaf_ = false;
+
       return;
     }
 
     /* it is a leaf */
+    is_leaf_ = true;
     idx = std::move(idx_in);
   }
 

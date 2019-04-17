@@ -14,6 +14,8 @@ knitr::opts_chunk$set(
   error = FALSE, cache = "./README-cache/", fig.path = "./README-fig/", 
   echo = TRUE)
 options(digits = 4, scipen = 7)
+palette(c("#000000", "#009E73", "#e79f00", "#9ad0f3", "#0072B2", "#D55E00", 
+          "#CC79A7", "#F0E442"))
 ```
 
 This package contains a simple implementation of the dual-tree method like the one 
